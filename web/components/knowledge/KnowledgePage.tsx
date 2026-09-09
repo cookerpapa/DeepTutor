@@ -60,6 +60,7 @@ export default function KnowledgePage() {
     refresh,
     createKb,
     uploadFiles,
+    syncFolder,
     setDefault,
     reindex,
     updatePendingIndexingPolicy,
@@ -370,6 +371,7 @@ export default function KnowledgePage() {
               history={selectedKb ? (historyByKb[selectedKb.name] ?? []) : []}
               onCreate={openCreate}
               onUpload={handleUpload}
+              onSyncFolder={syncFolder}
               onReindex={handleReindex}
               onUpdatePendingIndexingPolicy={handleUpdatePendingIndexingPolicy}
               onRetry={handleRetry}

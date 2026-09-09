@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   connectImaKnowledgeBase as connectImaApi,
   connectWeKnora as connectWeKnoraApi,
@@ -24,6 +25,7 @@ import {
 } from "@/features/knowledge/api/catalog";
 import { connectLightRagServer as connectLightRagServerApi } from "@/features/knowledge/api/engines";
 import { uploadKnowledgeBaseFiles as uploadKbApi } from "@/features/knowledge/api/files";
+import { syncLinkedFolder as syncLinkedFolderApi } from "@/features/knowledge/api/sources";
 import {
   DEFAULT_UPLOAD_POLICY,
   type KnowledgeBase,
@@ -47,6 +49,7 @@ interface LoadOptions {
 }
 
 export function useKnowledgeBases() {
+  const { t } = useTranslation();
   const [kbs, setKbs] = useState<KnowledgeBase[]>([]);
   const [providers, setProviders] = useState<RagProviderSummary[]>([]);
   const [uploadPolicy, setUploadPolicy] = useState<KnowledgeUploadPolicy>(
@@ -249,6 +252,31 @@ export function useKnowledgeBases() {
     [load, progress],
   );
 
+  const syncFolder = useCallback(
+    async (kbName: string, folderId: string) => {
+      const result = await syncLinkedFolderApi(kbName, folderId);
+      if (result.task_id) {
+        progress.startTask({
+          kbName,
+          taskId: result.task_id,
+          kind: "upload",
+          label: t("Folder sync"),
+          initialLogs: [t("Waiting for backend indexing logs...")],
+          seed: {
+            stage: "processing_documents",
+            message: t("Syncing linked folder…"),
+            current: 0,
+            total: result.file_count,
+            progress_percent: 0,
+          },
+        });
+      }
+      await load({ force: true, showSpinner: false });
+      return result;
+    },
+    [load, progress, t],
+  );
+
   const setDefault = useCallback(
     async (kbName: string) => {
       await setDefaultKbApi(kbName);
@@ -418,6 +446,7 @@ export function useKnowledgeBases() {
     deleteKb,
     connectObsidian,
     connectLinkedFolder,
+    syncFolder,
     connectLightRagServer,
     connectWeKnora,
     connectMarginNote4,

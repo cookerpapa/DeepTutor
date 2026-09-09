@@ -320,12 +320,26 @@ export const KB_DETAIL_SECTIONS = [
   "add",
   "github",
   "web",
+  "folders",
   "versions",
   "devices",
   "settings",
 ] as const;
 
 export type KbDetailSection = (typeof KB_DETAIL_SECTIONS)[number];
+
+/** Only locally indexed, writable KBs can import documents from source folders. */
+export const kbSupportsLinkedFolders = (kb: KnowledgeBase): boolean =>
+  !kb.read_only &&
+  ![
+    "obsidian",
+    "linked",
+    "subagent",
+    "lightrag_server",
+    "ima",
+    "weknora",
+    "marginnote4",
+  ].includes(kb.metadata?.type ?? "");
 
 /**
  * The detail sections a KB has something to show in.
@@ -337,7 +351,11 @@ export type KbDetailSection = (typeof KB_DETAIL_SECTIONS)[number];
 export const kbDetailSections = (kb: KnowledgeBase): KbDetailSection[] =>
   isMarginNoteKb(kb)
     ? ["devices", "settings"]
-    : KB_DETAIL_SECTIONS.filter((section) => section !== "devices");
+    : KB_DETAIL_SECTIONS.filter(
+        (section) =>
+          section !== "devices" &&
+          (section !== "folders" || kbSupportsLinkedFolders(kb)),
+      );
 
 /** The retrieval engine a KB is bound to. Connected vaults badge by source. */
 export const kbProvider = (kb: KnowledgeBase): string => {

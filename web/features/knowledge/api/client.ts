@@ -787,6 +787,91 @@ export interface LinkedFolderProbe {
   error: string | null;
 }
 
+/** A source directory whose documents can be imported into an existing KB. */
+export interface LinkedFolder {
+  id: string;
+  path: string;
+  added_at: string;
+  file_count: number;
+  last_sync?: string | null;
+}
+
+export interface LinkedFolderSyncResult {
+  message: string;
+  file_count: number;
+  task_id?: string;
+  new_files?: number;
+  modified_files?: number;
+}
+
+export async function listLinkedFolders(
+  kbName: string,
+  signal?: AbortSignal,
+): Promise<LinkedFolder[]> {
+  const res = await apiFetch(
+    apiUrl(`/api/knowledge-bases/${encodeURIComponent(kbName)}/linked-folders`),
+    { signal },
+  );
+  if (!res.ok) {
+    throw new Error(
+      await readErrorDetail(res, "Failed to list linked folders"),
+    );
+  }
+  return (await res.json()) as LinkedFolder[];
+}
+
+export async function linkLocalFolder(
+  kbName: string,
+  folderPath: string,
+): Promise<LinkedFolder> {
+  const res = await apiFetch(
+    apiUrl(`/api/knowledge-bases/${encodeURIComponent(kbName)}/link-folder`),
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ folder_path: folderPath }),
+    },
+  );
+  if (!res.ok) {
+    throw new Error(await readErrorDetail(res, "Failed to link folder"));
+  }
+  invalidateKnowledgeCaches();
+  return (await res.json()) as LinkedFolder;
+}
+
+export async function unlinkLocalFolder(
+  kbName: string,
+  folderId: string,
+): Promise<void> {
+  const res = await apiFetch(
+    apiUrl(
+      `/api/knowledge-bases/${encodeURIComponent(kbName)}/linked-folders/${encodeURIComponent(folderId)}`,
+    ),
+    { method: "DELETE" },
+  );
+  if (!res.ok) {
+    throw new Error(await readErrorDetail(res, "Failed to unlink folder"));
+  }
+  invalidateKnowledgeCaches();
+}
+
+export async function syncLinkedFolder(
+  kbName: string,
+  folderId: string,
+): Promise<LinkedFolderSyncResult> {
+  const res = await apiFetch(
+    apiUrl(
+      `/api/knowledge-bases/${encodeURIComponent(kbName)}/sync-folder/${encodeURIComponent(folderId)}`,
+    ),
+    { method: "POST" },
+  );
+  if (!res.ok) {
+    throw new Error(await readErrorDetail(res, "Failed to sync folder"));
+  }
+  invalidateKnowledgeCaches();
+  return (await res.json()) as LinkedFolderSyncResult;
+}
+
 export async function probeLinkedFolder(payload: {
   folderPath: string;
   provider: string;

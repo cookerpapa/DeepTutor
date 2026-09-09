@@ -255,8 +255,33 @@ test("an ordinary knowledge base has no devices section", () => {
     "add",
     "github",
     "web",
+    "folders",
     "versions",
     "settings",
   ]);
   assert.equal(isMarginNoteKb(indexed), false);
+});
+
+test("source folder controls are limited to writable indexed knowledge bases", () => {
+  for (const type of [
+    "obsidian",
+    "linked",
+    "subagent",
+    "lightrag_server",
+    "ima",
+    "weknora",
+    "marginnote4",
+  ]) {
+    assert.equal(
+      kbDetailSections({ name: "External", metadata: { type } }).includes(
+        "folders",
+      ),
+      false,
+      type,
+    );
+  }
+  assert.equal(
+    kbDetailSections({ name: "Shared", read_only: true }).includes("folders"),
+    false,
+  );
 });

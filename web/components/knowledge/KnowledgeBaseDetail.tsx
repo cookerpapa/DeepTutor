@@ -6,6 +6,7 @@ import {
   ArrowLeft,
   Database,
   FileText,
+  FolderSync,
   Github,
   Globe,
   Layers,
@@ -19,6 +20,7 @@ import {
 import type {
   IndexingLLMSelection,
   KnowledgeUploadPolicy,
+  LinkedFolderSyncResult,
 } from "@/features/knowledge/model/types";
 import {
   formatKnowledgeTimestamp,
@@ -39,6 +41,7 @@ import KbIndexVersionsSection from "./KbIndexVersionsSection";
 import KbSettingsSection from "./KbSettingsSection";
 import KbGitHubSourcesSection from "./KbGitHubSourcesSection";
 import KbWebSourcesSection from "./KbWebSourcesSection";
+import KbLinkedFoldersSection from "./KbLinkedFoldersSection";
 import KbMarginNoteDevicesSection from "./KbMarginNoteDevicesSection";
 import KnowledgeEngineIcon, {
   knowledgeSourceIconId,
@@ -50,6 +53,10 @@ interface KnowledgeBaseDetailProps {
   task?: TaskState;
   history: HistoryEntry[];
   onCreate: () => void;
+  onSyncFolder: (
+    kbName: string,
+    folderId: string,
+  ) => Promise<LinkedFolderSyncResult>;
   onUpload: (
     kbName: string,
     files: File[],
@@ -78,6 +85,7 @@ const SECTION_CHROME: Record<
   add: { label: "Add documents", Icon: Upload },
   github: { label: "GitHub", Icon: Github },
   web: { label: "Web", Icon: Globe },
+  folders: { label: "Linked folders", Icon: FolderSync },
   versions: { label: "Index versions", Icon: Layers },
   devices: { label: "Devices", Icon: Smartphone },
   settings: { label: "Settings", Icon: SettingsIcon },
@@ -92,6 +100,7 @@ export default function KnowledgeBaseDetail({
   task,
   history,
   onCreate,
+  onSyncFolder,
   onUpload,
   onReindex,
   onUpdatePendingIndexingPolicy,
@@ -319,6 +328,14 @@ export default function KnowledgeBaseDetail({
               )}
               {activeSection === "web" && (
                 <KbWebSourcesSection kbName={kb.name} />
+              )}
+              {activeSection === "folders" && (
+                <KbLinkedFoldersSection
+                  key={kb.name}
+                  kb={kb}
+                  task={task}
+                  onSyncFolder={onSyncFolder}
+                />
               )}
               {activeSection === "devices" && (
                 <KbMarginNoteDevicesSection key={kb.name} kb={kb} />
